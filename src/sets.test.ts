@@ -1,0 +1,33 @@
+import { describe, expect, it } from 'vitest'
+import { findSet, loadSets } from './sets.js'
+
+describe('loadSets', () => {
+  it('loads all sets from language subdirs', async () => {
+    const sets = await loadSets()
+    expect(sets.length).toBeGreaterThan(0)
+    expect(sets[0]).toHaveProperty('name')
+    expect(sets[0]).toHaveProperty('language')
+    expect(sets[0]).toHaveProperty('config.spinnerVerbs.verbs')
+  })
+
+  it('assigns language from directory name', async () => {
+    const sets = await loadSets()
+    const nlSets = sets.filter((s) => s.language === 'nl')
+    expect(nlSets.length).toBe(3)
+  })
+})
+
+describe('findSet', () => {
+  it('finds a set by name', async () => {
+    const set = await findSet('jiskefet')
+    expect(set).toBeDefined()
+    expect(set?.name).toBe('jiskefet')
+    expect(set?.language).toBe('nl')
+    expect(set?.config.spinnerVerbs.verbs.length).toBeGreaterThan(0)
+  })
+
+  it('returns undefined for unknown set', async () => {
+    const set = await findSet('nonexistent')
+    expect(set).toBeUndefined()
+  })
+})
