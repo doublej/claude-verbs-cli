@@ -61,6 +61,7 @@
     var FONT_META = FONT_MAIN;
     var FONT_FAMILY = '"SF Mono", "Fira Code", "Cascadia Code", monospace';
     var SCROLL_MS = 350;
+    var DEMO_TIMEOUT_MS = 15000;
 
     /* ---- Helpers ---- */
 
@@ -99,6 +100,103 @@
 
     function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
     function randInt(lo, hi) { return lo + Math.floor(Math.random() * (hi - lo + 1)); }
+
+    /* Called at init; references sets + colour constants defined below */
+    function buildHeaderRows(cols) {
+      var n = 0;
+      var ks = Object.keys(sets);
+      for (var ki = 0; ki < ks.length; ki++) n += sets[ks[ki]].length;
+
+      var inner = cols - 2;
+      var lw = 38;
+      var rw = inner - lw - 1;
+
+      function ctr(s, w) {
+        var g = Math.max(0, w - s.length);
+        var l = Math.floor(g / 2);
+        return repeat(' ', l) + s + repeat(' ', g - l);
+      }
+      function rpad(s, w) { return s + repeat(' ', Math.max(0, w - s.length)); }
+
+      function row(left, right, c) {
+        return { text: '\u2502' + ctr(left, lw) + '\u2502' + rpad(' ' + right, rw) + '\u2502', color: c };
+      }
+
+      var title = ' Claude Verbs ';
+      var dashes = inner - title.length;
+      var dl = Math.floor(dashes / 2);
+
+      return [
+        { text: '\u256d' + repeat('\u2500', dl) + title + repeat('\u2500', dashes - dl) + '\u256e', color: C_ACCENT },
+        row('', '', C_BORDER),
+        row('Welcome!', 'Getting started', COLOR_VERB),
+        row('', 'spinner-verbs install <name>', C_DIM),
+        row('\u2590\u259b\u2588\u2588\u2588\u259c\u258c', repeat('\u2500', 25), COLOR_VERB),
+        row('\u259d\u259c\u2588\u2588\u2588\u2588\u2588\u259b\u2598', n + ' verb sets available', COLOR_VERB),
+        row('\u2598\u2598 \u259d\u259d', 'Arrow keys to browse', C_DIM),
+        row('', '', C_BORDER),
+        row('spinner-verbs v0.1', '', COLOR_VERB),
+        row('', '', C_BORDER),
+        { text: '\u2570' + repeat('\u2500', inner) + '\u256f', color: C_BORDER },
+        { text: ctr('Claude Verbs \u2014 themed spinner verbs for Claude Code', cols), color: COLOR_META },
+      ];
+    }
+
+    /* ---- Sets + locale ---- */
+
+    var sets = (typeof SETS !== 'undefined') ? SETS : {};
+
+    function detectLocale() {
+      var lang = (navigator.language || 'en').slice(0, 2).toLowerCase();
+      if (sets[lang]) return lang;
+      return sets['en'] ? 'en' : Object.keys(sets)[0] || 'en';
+    }
+
+    var locale = detectLocale();
+
+    var idiotSet = null;
+    if (sets['en']) {
+      for (var si = 0; si < sets['en'].length; si++) {
+        if (sets['en'][si].name === 'idiot') { idiotSet = sets['en'][si]; break; }
+      }
+    }
+
+    /* build browse list: locale sets first, padded with random others if < 3 */
+    var localeSets = (sets[locale] || []).slice();
+    if (localeSets[0] === idiotSet && localeSets.length > 1) localeSets.push(localeSets.shift());
+    else if (localeSets[0] === idiotSet) localeSets = [];
+    if (localeSets.length < 3) {
+      var pool = [];
+      var lkeys = Object.keys(sets);
+      for (var lk = 0; lk < lkeys.length; lk++) {
+        for (var gi = 0; gi < sets[lkeys[lk]].length; gi++) {
+          var ps = sets[lkeys[lk]][gi];
+          if (ps !== idiotSet && localeSets.indexOf(ps) === -1) pool.push(ps);
+        }
+      }
+      pool = shuffle(pool);
+      while (localeSets.length < 3 && pool.length > 0) localeSets.push(pool.shift());
+    }
+    var defaultSet = localeSets[0] || null;
+
+    /* ---- State Machine ---- */
+
+    var S = { IDLE: 0, BROWSING: 1, DEMO: 2, POST_DEMO: 3, BUGGED: 4 };
+
+    var machine = {
+      current: S.IDLE,
+      previous: S.IDLE,
+      activeSet: null,
+      browseIndex: 0,
+      skipCount: 0,
+      postIndex: 0,
+      demoTimer: null,
+    };
+
+    var POST_SUGGESTIONS = [
+      { text: 'copy command to get access to spinner verb cli', action: 'copy' },
+      { text: 'show marketplace', action: 'marketplace' },
+    ];
 
     /* ---- PixiJS setup ---- */
 
@@ -176,6 +274,26 @@
 
     var metaLine = new PIXI.Container();
     metaLine.addChild(metaText);
+
+    /* ---- Header + Input ---- */
+
+    var COLOR_SUGGESTION = 0x555555;
+    var COLOR_ACTIVE = 0xffffff;
+
+    var inputContainer = new PIXI.Container();
+    inputContainer.eventMode = 'static';
+    inputContainer.cursor = 'pointer';
+    var caretText = new PIXI.Text('> ', Object.assign({ fontFamily: FONT_FAMILY, fontSize: FONT_MAIN, fill: COLOR_SUGGESTION, dropShadowColor: COLOR_SUGGESTION }, GLOW));
+    var inputText = new PIXI.Text('', Object.assign({ fontFamily: FONT_FAMILY, fontSize: FONT_MAIN, fill: COLOR_SUGGESTION, dropShadowColor: COLOR_SUGGESTION }, GLOW));
+    inputText.x = Math.round(caretText.width);
+    inputContainer.addChild(caretText, inputText);
+
+    /* ---- Bugged placeholder ---- */
+
+    var buggedContainer = new PIXI.Container();
+    var buggedText = new PIXI.Text('BUGGED', Object.assign({ fontFamily: FONT_FAMILY, fontSize: Math.round(FONT_MAIN * 1.5), fill: 0xff0000, dropShadowColor: 0xff0000 }, GLOW));
+    buggedContainer.addChild(buggedText);
+    buggedContainer.visible = false;
 
     /* ---- Scrolling output colours ---- */
 
@@ -376,7 +494,7 @@
     var bottomChrome = new PIXI.Container();
     bottomChrome.addChild(ruleTop, promptText, ruleBottom, statusText, permsText, infoText);
 
-    app.stage.addChild(scrollContainer, spinnerLine, metaLine, bottomChrome);
+    app.stage.addChild(scrollContainer, spinnerLine, metaLine, bottomChrome, inputContainer, buggedContainer);
 
     /* ---- Bloom ---- */
     if (PIXI.filters && PIXI.filters.AdvancedBloomFilter) {
@@ -418,8 +536,7 @@
       verbText.x = col3;
       ellipsisText.x = verbText.x + verbText.width;
 
-      var lineW = ellipsisText.x + ellipsisText.width;
-      var leftX = Math.round((app.screen.width - lineW) / 2);
+      var leftX = Math.round(chW * 2);
       spinnerLine.x = leftX;
       spinnerLine.y = Math.round(app.screen.height / 2 - glyphText.height);
 
@@ -455,6 +572,42 @@
       permsText.y = statusText.y + lh + pad;
       infoText.x = ch1;
       infoText.y = permsText.y + lh + pad;
+
+      /* visibility per state */
+      var inIdle = machine.current === S.IDLE;
+      var inTerminal = !inIdle && machine.current !== S.BUGGED;
+      headerContainer.visible = inIdle;
+      inputContainer.visible = inIdle;
+      scrollContainer.visible = inTerminal;
+      spinnerLine.visible = inTerminal;
+      metaLine.visible = machine.current === S.DEMO;
+      bottomChrome.visible = inTerminal;
+      buggedContainer.visible = machine.current === S.BUGGED;
+
+      /* header + input positioning */
+      var headerH = headerTexts.length * lh;
+      var blockH = headerH + lh + lh;
+      var topY = Math.round((app.screen.height - blockH) / 2);
+      var hx = Math.round((app.screen.width - 80 * chW) / 2);
+      headerContainer.x = hx;
+      headerContainer.y = topY;
+      inputContainer.x = hx;
+      inputContainer.y = topY + headerH + lh;
+      buggedContainer.x = leftX;
+      buggedContainer.y = Math.round((app.screen.height - buggedText.height) / 2);
+    }
+
+    function layoutScrollItems() {
+      var lh = Math.round(glyphText.height * 1.25);
+      var gap = Math.round(lh * 0.6);
+      for (var i = 0; i < scrollItems.length; i++) {
+        scrollItems[i].y = spinnerLine.y - gap - (scrollItems.length - i) * lh;
+      }
+      while (scrollItems.length > 0 && scrollItems[0].y + lh < 0) {
+        scrollContainer.removeChild(scrollItems[0]);
+        scrollItems[0].destroy();
+        scrollItems.shift();
+      }
     }
 
     function addScrollLine() {
@@ -463,17 +616,132 @@
       txt.x = Math.round((line.col || 3) * chW);
       scrollContainer.addChild(txt);
       scrollItems.push(txt);
+      layoutScrollItems();
+    }
 
-      var lh = Math.round(glyphText.height * 1.25);
-      var gap = Math.round(lh * 0.6);
-      for (var i = 0; i < scrollItems.length; i++) {
-        scrollItems[i].y = spinnerLine.y - gap - (scrollItems.length - i) * lh;
+    /* ---- State management ---- */
+
+    function updateSuggestion() {
+      var text = '';
+      if (machine.current === S.IDLE) {
+        text = defaultSet ? 'Show me some verbs of ' + defaultSet.name : 'No sets available';
+        inputText.text = text;
+        inputText.style.fill = COLOR_SUGGESTION;
+        inputText.style.dropShadowColor = COLOR_SUGGESTION;
+        caretText.style.fill = COLOR_SUGGESTION;
+        caretText.style.dropShadowColor = COLOR_SUGGESTION;
+        promptText.text = '\u276f';
+        promptText.style.fill = C_PROMPT;
+        promptText.style.dropShadowColor = C_PROMPT;
+        return;
       }
+      var hint = '';
+      if (machine.current === S.BROWSING) {
+        if (machine.skipCount >= 4 && idiotSet) {
+          text = 'Show me some verbs of an idt';
+        } else {
+          var bs = localeSets[machine.browseIndex % localeSets.length];
+          text = bs ? 'Show me some verbs of ' + bs.name : '';
+        }
+        hint = '\u2191\u2193 browse \u00b7 enter to demo';
+      } else if (machine.current === S.POST_DEMO) {
+        text = POST_SUGGESTIONS[machine.postIndex].text;
+        hint = '\u2191\u2193 browse \u00b7 enter to select';
+      }
+      promptText.text = '\u276f ' + text + '   ' + hint;
+      promptText.style.fill = COLOR_ACTIVE;
+      promptText.style.dropShadowColor = COLOR_ACTIVE;
+      verbText.text = '';
+      ellipsisText.visible = false;
+      highlightText.visible = false;
+    }
 
-      while (scrollItems.length > 0 && scrollItems[0].y + lh < 0) {
-        scrollContainer.removeChild(scrollItems[0]);
-        scrollItems[0].destroy();
-        scrollItems.shift();
+    function startDemo(set) {
+      if (!set) return;
+      machine.activeSet = set;
+      var sv = set.verbs ? set.verbs.slice() : [];
+      if (set === idiotSet) {
+        for (var di = 0; di < sv.length; di++) sv[di] = sv[di] + ' like an idiot';
+      }
+      verbs = shuffle(sv);
+      if (verbs.length === 0) verbs = ['Thinking', 'Processing'];
+      verbIdx = 0;
+      verbText.text = verbs[0];
+      verbText.style.fill = COLOR_VERB;
+      verbText.style.dropShadowColor = COLOR_VERB;
+      ellipsisText.visible = true;
+      promptText.text = '\u276f';
+      promptText.style.fill = C_PROMPT;
+      promptText.style.dropShadowColor = C_PROMPT;
+      tokenCount = 0;
+      startTime = Date.now();
+      lastFrameTime = 0;
+      lastVerbTime = 0;
+      lastTokenTime = 0;
+      lastScrollTime = 0;
+      for (var ci = scrollItems.length - 1; ci >= 0; ci--) {
+        scrollContainer.removeChild(scrollItems[ci]);
+        scrollItems[ci].destroy();
+      }
+      scrollItems = [];
+      machine.demoTimer = setTimeout(function () { dispatch('DEMO_TIMEOUT'); }, DEMO_TIMEOUT_MS);
+    }
+
+    function stopDemo() {
+      if (machine.demoTimer) { clearTimeout(machine.demoTimer); machine.demoTimer = null; }
+    }
+
+    function enterState(state) {
+      exitState(machine.current);
+      machine.previous = machine.current;
+      machine.current = state;
+      if (state === S.POST_DEMO) machine.postIndex = 0;
+      if (state === S.IDLE || state === S.BROWSING || state === S.POST_DEMO) updateSuggestion();
+      if (state === S.DEMO) startDemo(machine.activeSet);
+    }
+
+    function exitState(state) {
+      if (state === S.DEMO) stopDemo();
+    }
+
+    function dispatch(event) {
+      var m = machine;
+      switch (m.current) {
+        case S.IDLE:
+          if (event === 'ENTER' && defaultSet) { m.activeSet = defaultSet; enterState(S.DEMO); }
+          else if (event === 'ARROW_DOWN' && localeSets.length > 0) { m.browseIndex = 1 % localeSets.length; m.skipCount = 0; enterState(S.BROWSING); }
+          else if (event === 'SHIFT_TAB') enterState(S.BUGGED);
+          break;
+        case S.BROWSING:
+          if (event === 'ENTER') {
+            m.activeSet = (m.skipCount >= 4 && idiotSet) ? idiotSet : localeSets[m.browseIndex % localeSets.length];
+            enterState(S.DEMO);
+          } else if (event === 'ARROW_DOWN') {
+            m.skipCount++;
+            if (!(m.skipCount >= 4 && idiotSet)) m.browseIndex = (m.browseIndex + 1) % localeSets.length;
+            updateSuggestion();
+          } else if (event === 'ARROW_UP') {
+            if (m.skipCount >= 4 && idiotSet) { m.skipCount = 3; updateSuggestion(); }
+            else if (m.browseIndex - 1 <= 0) enterState(S.IDLE);
+            else { m.browseIndex--; m.skipCount = Math.max(0, m.skipCount - 1); updateSuggestion(); }
+          } else if (event === 'SHIFT_TAB') enterState(S.BUGGED);
+          break;
+        case S.DEMO:
+          if (event === 'ESC' || event === 'DEMO_TIMEOUT') enterState(S.POST_DEMO);
+          else if (event === 'SHIFT_TAB') enterState(S.BUGGED);
+          break;
+        case S.POST_DEMO:
+          if (event === 'ENTER') {
+            var act = POST_SUGGESTIONS[m.postIndex].action;
+            if (act === 'copy' && m.activeSet) navigator.clipboard.writeText('bunx spinner-verbs install ' + m.activeSet.name);
+            else if (act === 'marketplace') window.location.href = 'marketplace.html';
+          } else if (event === 'ARROW_DOWN') { m.postIndex = (m.postIndex + 1) % POST_SUGGESTIONS.length; updateSuggestion(); }
+          else if (event === 'ARROW_UP') { m.postIndex = (m.postIndex - 1 + POST_SUGGESTIONS.length) % POST_SUGGESTIONS.length; updateSuggestion(); }
+          else if (event === 'SHIFT_TAB') enterState(S.BUGGED);
+          break;
+        case S.BUGGED:
+          if (event === 'ESC') enterState(m.previous);
+          break;
       }
     }
 
@@ -501,60 +769,83 @@
         lastFrameTime = now;
       }
 
-      if (verbs.length > 0 && now - lastVerbTime >= VERB_MS) {
-        verbIdx = (verbIdx + 1) % verbs.length;
-        verbText.text = verbs[verbIdx];
-        lastVerbTime = now;
-      }
-
-      if (now - lastTokenTime >= 1000) {
-        tokenCount += TOKEN_RATE + Math.floor(Math.random() * 20 - 10);
-        lastTokenTime = now;
-      }
-
-      var scrollDelay = (currentBurstMs > 0 && linesLeftInBurst > 0) ? currentBurstMs : SCROLL_MS;
-      if (now - lastScrollTime >= scrollDelay) {
-        addScrollLine();
-        lastScrollTime = now;
-      }
-
-      var verb = verbText.text;
-      var totalSteps = verb.length + 2;
-      var cycleMs = totalSteps * CHAR_DWELL_MS;
-      if (verb.length > 0) {
-        var step = Math.floor((now % cycleMs) / CHAR_DWELL_MS) - 2;
-        var start = Math.max(0, step);
-        var end = Math.min(verb.length, step + 3);
-        highlightText.text = verb.substring(start, end);
-        highlightText.x = verbText.x + start * chW;
-        highlightText.visible = end > start;
-      }
-
       var glareCycle = 12000;
       var gt = (now % glareCycle) / glareCycle;
       glareSprite.x = app.screen.width * (0.2 + 0.6 * gt);
       glareSprite.y = app.screen.height * (0.3 + 0.15 * Math.sin(gt * Math.PI * 2));
       glareSprite.alpha = 0.5 + 0.3 * Math.sin(gt * Math.PI);
 
-      var elapsed = fmtElapsed(now - startTime);
-      metaText.text = '(esc to interrupt \u00b7 ' + elapsed + ' \u00b7 \u2193 ' + tokenCount + ' tokens \u00b7 thinking)';
+      /* scroll + bottom chrome: all terminal states */
+      if (machine.current !== S.IDLE && machine.current !== S.BUGGED) {
+        var scrollDelay = (currentBurstMs > 0 && linesLeftInBurst > 0) ? currentBurstMs : SCROLL_MS;
+        if (now - lastScrollTime >= scrollDelay) {
+          addScrollLine();
+          lastScrollTime = now;
+        }
+        statusText.text = '\u2026/_management\u2026/spinner-verbs\u2026/site   main *5';
+        permsText.text = '\u23f5\u23f5 bypass permissions on (shift+tab to cycle) \u00b7 5 files +322 -66';
+        var h = Math.floor((now - startTime) / 3600000);
+        var m = Math.floor(((now - startTime) % 3600000) / 60000);
+        var timeStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+        infoText.text = timeStr + ' | tip: /git:commit';
+      }
 
-      statusText.text = '\u2026/_management\u2026/spinner-verbs\u2026/site   main *5';
-      permsText.text = '\u23f5\u23f5 bypass permissions on (shift+tab to cycle) \u00b7 5 files +322 -66';
-      var h = Math.floor((now - startTime) / 3600000);
-      var m = Math.floor(((now - startTime) % 3600000) / 60000);
-      var timeStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-      infoText.text = timeStr + ' | tip: /git:commit';
+      /* verb rotation + highlight: DEMO only */
+      if (machine.current === S.DEMO) {
+        if (verbs.length > 0 && now - lastVerbTime >= VERB_MS) {
+          verbIdx = (verbIdx + 1) % verbs.length;
+          verbText.text = verbs[verbIdx];
+          lastVerbTime = now;
+        }
+
+        if (now - lastTokenTime >= 1000) {
+          tokenCount += TOKEN_RATE + Math.floor(Math.random() * 20 - 10);
+          lastTokenTime = now;
+        }
+
+        var verb = verbText.text;
+        var totalSteps = verb.length + 2;
+        var cycleMs = totalSteps * CHAR_DWELL_MS;
+        if (verb.length > 0) {
+          var step = Math.floor((now % cycleMs) / CHAR_DWELL_MS) - 2;
+          var start = Math.max(0, step);
+          var end = Math.min(verb.length, step + 3);
+          highlightText.text = verb.substring(start, end);
+          highlightText.x = verbText.x + start * chW;
+          highlightText.visible = end > start;
+        }
+
+        var elapsed = fmtElapsed(now - startTime);
+        metaText.text = '(esc to interrupt \u00b7 ' + elapsed + ' \u00b7 \u2193 ' + tokenCount + ' tokens \u00b7 thinking)';
+      }
 
       layout();
     });
 
+    /* ---- Keyboard ---- */
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); dispatch('ENTER'); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); dispatch('ARROW_DOWN'); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); dispatch('ARROW_UP'); }
+      else if (e.key === 'Escape') { dispatch('ESC'); }
+      else if (e.key === 'Tab' && e.shiftKey) { e.preventDefault(); dispatch('SHIFT_TAB'); }
+    });
+
+    inputContainer.on('pointertap', function () { dispatch('ENTER'); });
+
     /* ---- Init ---- */
 
-    var sets = (typeof SETS !== 'undefined') ? SETS : {};
-    verbs = shuffle(getAllVerbs(sets));
-    if (verbs.length === 0) verbs = ['Thinking', 'Processing'];
-    verbText.text = verbs[0];
+    var headerRowData = buildHeaderRows(80);
+    var headerLh = glyphText.height;
+    for (var hi = 0; hi < headerRowData.length; hi++) {
+      var hr = headerRowData[hi];
+      var ht = new PIXI.Text(hr.text, { fontFamily: FONT_FAMILY, fontSize: FONT_MAIN, fill: hr.color });
+      ht.y = Math.round(hi * headerLh);
+      headerTexts.push(ht);
+      headerContainer.addChild(ht);
+    }
+    enterState(S.IDLE);
     layout();
   })();
   </script>
