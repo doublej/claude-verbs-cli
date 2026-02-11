@@ -50,7 +50,10 @@ async function main(): Promise<void> {
       return reset()
     case 'prompt': {
       requireArg('prompt <subject>')
-      const subject = argv.slice(1).filter((a) => !a.startsWith('--')).join(' ')
+      const subject = argv
+        .slice(1)
+        .filter((a) => !a.startsWith('--'))
+        .join(' ')
       return generatePrompt(subject, language)
     }
     default:

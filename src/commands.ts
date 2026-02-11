@@ -47,7 +47,9 @@ export async function show(name: string): Promise<void> {
 export async function install(name: string): Promise<void> {
   const set = await requireSet(name)
   await installVerbs(set)
-  console.log(`Installed "${set.name}" [${set.language}] (${set.config.spinnerVerbs.verbs.length} verbs).`)
+  console.log(
+    `Installed "${set.name}" [${set.language}] (${set.config.spinnerVerbs.verbs.length} verbs).`,
+  )
   console.log(`Browse more sets at ${SITE_URL}`)
 }
 
