@@ -40,13 +40,17 @@ sets/
 ## CLI Usage
 
 ```
-bunx github:doublej/claude-verbs-cli list              Show available verb sets
-bunx github:doublej/claude-verbs-cli show <name>       Show contents of a verb set
-bunx github:doublej/claude-verbs-cli install <name>    Apply a verb set to Claude Code
-bunx github:doublej/claude-verbs-cli current           Show currently installed spinner verbs
-bunx github:doublej/claude-verbs-cli reset             Remove spinner verbs (restore defaults)
-bunx github:doublej/claude-verbs-cli prompt <subject>  Generate a prompt for creating a new verb set
+bunx github:doublej/claude-verbs-cli list [--language <code>]              Show available verb sets
+bunx github:doublej/claude-verbs-cli show <name>                           Show contents of a verb set
+bunx github:doublej/claude-verbs-cli install <name>                        Apply a verb set to Claude Code
+bunx github:doublej/claude-verbs-cli current                               Show currently installed spinner verbs
+bunx github:doublej/claude-verbs-cli reset                                 Remove spinner verbs (restore defaults)
+bunx github:doublej/claude-verbs-cli prompt <subject> [--language <locale>] Generate a prompt for creating a new verb set
 ```
+
+Supported languages: `en_GB`, `nl_NL`, `de_DE`, `fr_FR`, `es_ES`, `it_IT`, `pt_PT`, `ja_JP`.
+
+Browse more sets at https://claudeverbs.com
 
 ## Conventions
 
