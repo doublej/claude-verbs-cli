@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 import { current, install, list, reset, show } from './commands.js'
 import { generatePrompt } from './prompt.js'
 

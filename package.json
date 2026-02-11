@@ -3,12 +3,26 @@
   "version": "0.1.0",
   "description": "Themed spinner verb sets for Claude Code",
   "author": "JJ",
+  "license": "MIT",
   "type": "module",
   "bin": {
-    "spinner-verbs": "src/cli.ts"
+    "spinner-verbs": "dist/cli.js"
   },
+  "files": [
+    "dist",
+    "sets"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "spinner",
+    "cli",
+    "verbs"
+  ],
   "scripts": {
     "cli": "bun src/cli.ts",
+    "build": "tsc",
+    "prepublishOnly": "bun run build && bun test && bun run lint",
     "test": "vitest run",
     "lint": "biome check .",
     "lint:fix": "biome check --write ."

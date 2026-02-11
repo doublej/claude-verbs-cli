@@ -1,0 +1,11 @@
+src/
+.beads/
+.vscode/
+*.test.ts
+*.spec.ts
+tsconfig.json
+biome.json
+justfile
+.git/
+.gitignore
+node_modules/
