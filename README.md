@@ -2,16 +2,13 @@
 
 Themed spinner verb sets for Claude Code.
 
-## Install
-
-### From GitHub (recommended)
+## Usage
 
 ```bash
-# Install globally
-bun install -g github:doublej/claude-verbs-cli
-
-# Then use it
-claude-verbs list
+bunx github:doublej/claude-verbs-cli list              # Show available verb sets
+bunx github:doublej/claude-verbs-cli install freddy    # Apply a verb set
+bunx github:doublej/claude-verbs-cli current           # Show installed verbs
+bunx github:doublej/claude-verbs-cli reset             # Restore defaults
 ```
 
 ### For development
@@ -21,15 +18,6 @@ git clone https://github.com/doublej/claude-verbs-cli
 cd claude-verbs-cli
 bun install
 bun link   # makes `claude-verbs` available globally
-```
-
-## Usage
-
-```bash
-claude-verbs list              # Show available verb sets
-claude-verbs install freddy    # Apply a verb set
-claude-verbs current           # Show installed verbs
-claude-verbs reset             # Restore defaults
 ```
 
 ## Adding a verb set

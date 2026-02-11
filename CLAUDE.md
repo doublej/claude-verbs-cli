@@ -34,19 +34,18 @@ sets/
 ├── schema.json         # JSON Schema for verb sets
 ├── _template.json      # template for new sets
 ├── en/                 # English verb sets
-├── nl/                 # Dutch verb sets
-└── united-states/      # US-themed verb sets
+└── nl/                 # Dutch verb sets
 ```
 
 ## CLI Usage
 
 ```
-claude-verbs list              Show available verb sets
-claude-verbs show <name>       Show contents of a verb set
-claude-verbs install <name>    Apply a verb set to Claude Code
-claude-verbs current           Show currently installed spinner verbs
-claude-verbs reset             Remove spinner verbs (restore defaults)
-claude-verbs prompt <subject>  Generate a prompt for creating a new verb set
+bunx github:doublej/claude-verbs-cli list              Show available verb sets
+bunx github:doublej/claude-verbs-cli show <name>       Show contents of a verb set
+bunx github:doublej/claude-verbs-cli install <name>    Apply a verb set to Claude Code
+bunx github:doublej/claude-verbs-cli current           Show currently installed spinner verbs
+bunx github:doublej/claude-verbs-cli reset             Remove spinner verbs (restore defaults)
+bunx github:doublej/claude-verbs-cli prompt <subject>  Generate a prompt for creating a new verb set
 ```
 
 ## Conventions

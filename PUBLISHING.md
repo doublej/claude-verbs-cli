@@ -43,7 +43,7 @@ npm publish
 ## Post-publish
 
 - Tag the release in git: `git tag v0.1.0 && git push --tags`
-- Test installation: `npm install -g claude-verbs-cli`
+- Test installation: `bunx github:doublej/claude-verbs-cli list`
 
 ## Package name availability
 

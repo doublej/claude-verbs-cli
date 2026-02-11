@@ -49,6 +49,13 @@ loc-check:
 	done
 	exit $err
 
+[group('data')]
+sync-sets:
+	rm -rf sets/en sets/nl
+	cp -r ../claude-verbs/en ../claude-verbs/nl sets/
+	cp ../claude-verbs/schema.json sets/schema.json
+	cp ../claude-verbs/_template.json sets/_template.json
+
 [group('quality')]
 check:
 	@echo '→ Checking file lengths...'
