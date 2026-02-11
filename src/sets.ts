@@ -15,17 +15,17 @@ export async function loadSets(): Promise<VerbSet[]> {
   return sets.flat()
 }
 
-async function loadLangSets(language: string): Promise<VerbSet[]> {
-  const dir = join(setsDir, language)
+async function loadLangSets(langDir: string): Promise<VerbSet[]> {
+  const dir = join(setsDir, langDir)
   const jsonFiles = await listJsonFilesRecursive(dir)
-  return Promise.all(jsonFiles.map((f) => loadSet(f, language)))
+  return Promise.all(jsonFiles.map((f) => loadSet(f)))
 }
 
-async function loadSet(path: string, language: string): Promise<VerbSet> {
+async function loadSet(path: string): Promise<VerbSet> {
   const raw = await readFile(path, 'utf-8')
-  const data = JSON.parse(raw) as Omit<VerbSet, 'language'>
+  const data = JSON.parse(raw) as VerbSet
   data.config.spinnerVerbs.verbs = data.config.spinnerVerbs.verbs.map(normalizeVerbLine)
-  return { ...data, language }
+  return data
 }
 
 async function listJsonFilesRecursive(dir: string): Promise<string[]> {
