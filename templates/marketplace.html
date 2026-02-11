@@ -204,6 +204,41 @@
       color: var(--text-faint);
     }
 
+    .card__copy {
+      position: absolute;
+      top: 1.25rem;
+      right: 3rem;
+      padding: 0.35rem 0.6rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .card:hover .card__copy,
+    .card:focus-within .card__copy {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .card__copy:hover {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    .card__copy.copied {
+      opacity: 1 !important;
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
     .card__author {
       display: inline-flex;
       align-items: center;
@@ -779,7 +814,8 @@
             for (var j = 0; j < group.length; j++) {
               var s = group[j];
               var verbs = normalizeVerbs(s.verbs || []);
-              html += '<div class="card" tabindex="0" role="button" aria-expanded="false" data-idx="' + lang + '-' + j + '">';
+              html += '<div class="card" tabindex="0" role="button" aria-expanded="false" data-idx="' + lang + '-' + j + '" data-set-name="' + esc(s.name) + '">';
+              html += '<button class="card__copy" data-set-name="' + esc(s.name) + '" aria-label="Copy install command" title="Copy install command">Copy</button>';
               html += '<span class="card__expand-hint" aria-hidden="true">&#9654;</span>';
               html += '<div class="card__name">' + esc(s.name) + '</div>';
               html += '<div class="card__desc">' + esc(s.description) + '</div>';
@@ -807,6 +843,27 @@
 
       function initCardInteractions() {
         document.getElementById('gallery-root').addEventListener('click', function (e) {
+          var copyBtn = e.target.closest('.card__copy');
+          if (copyBtn) {
+            e.stopPropagation();
+            var setName = copyBtn.getAttribute('data-set-name');
+            var cmd = 'spinner-verbs install ' + setName;
+            navigator.clipboard.writeText(cmd).then(function () {
+              copyBtn.textContent = 'Copied!';
+              copyBtn.classList.add('copied');
+              setTimeout(function () {
+                copyBtn.textContent = 'Copy';
+                copyBtn.classList.remove('copied');
+              }, 2000);
+            }).catch(function () {
+              copyBtn.textContent = 'Failed';
+              setTimeout(function () {
+                copyBtn.textContent = 'Copy';
+              }, 2000);
+            });
+            return;
+          }
+
           var card = e.target.closest('.card');
           if (!card) { return; }
           var wasExpanded = card.classList.contains('expanded');
