@@ -6,7 +6,7 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "spinner-verbs": "dist/cli.js"
+    "spinner-verbs": "src/cli.ts"
   },
   "files": [
     "dist",

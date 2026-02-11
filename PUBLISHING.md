@@ -1,6 +1,19 @@
 # Publishing to npm
 
-## Prerequisites
+## Note on GitHub vs npm
+
+This package is optimized for **GitHub installation with bun**:
+- `bin` points to `src/cli.ts` (TypeScript source)
+- Uses `#!/usr/bin/env bun` shebang
+
+For npm publishing, you'd need to:
+1. Build to `dist/`
+2. Update `bin` to point to `dist/cli.js`
+3. Change shebang to `#!/usr/bin/env node`
+
+**Recommendation**: Stick with GitHub installation for now.
+
+## Prerequisites (if publishing to npm)
 
 1. npm account (create at https://www.npmjs.com/signup)
 2. Login via CLI: `npm login`
