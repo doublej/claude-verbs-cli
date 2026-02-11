@@ -10,9 +10,9 @@ describe('loadSets', () => {
     expect(sets[0]).toHaveProperty('config.spinnerVerbs.verbs')
   })
 
-  it('assigns language from directory name', async () => {
+  it('reads language from JSON files', async () => {
     const sets = await loadSets()
-    const nlSets = sets.filter((s) => s.language === 'nl')
+    const nlSets = sets.filter((s) => s.language === 'nl_NL')
     expect(nlSets.length).toBe(3)
   })
 
@@ -32,7 +32,7 @@ describe('findSet', () => {
     const set = await findSet('jiskefet')
     expect(set).toBeDefined()
     expect(set?.name).toBe('jiskefet')
-    expect(set?.language).toBe('nl')
+    expect(set?.language).toBe('nl_NL')
     expect(set?.config.spinnerVerbs.verbs.length).toBeGreaterThan(0)
   })
 
