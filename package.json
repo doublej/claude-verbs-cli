@@ -9,7 +9,7 @@
     "spinner-verbs": "src/cli.ts"
   },
   "files": [
-    "dist",
+    "src",
     "sets"
   ],
   "keywords": [
