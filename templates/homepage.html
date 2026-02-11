@@ -61,9 +61,9 @@
       colorHighlight: '#ffee55',
       glareOpacity: 1,
       perspective: 1000,
-      rotateX: 10,
-      rotateY: -2,
-      rotateZ: 4,
+      rotateX: 0,
+      rotateY: 0,
+      rotateZ: 0,
       scale: 3,
       translateX: 2,
       translateY: 0,
@@ -1319,9 +1319,10 @@
   /* Camera */
   var fCam = pane.addFolder({ title: 'Camera', expanded: false });
   bind(fCam, 'perspective', { min: 200, max: 5000, step: 50 });
-  bind(fCam, 'rotateX', { min: -30, max: 30, step: 0.5 });
-  bind(fCam, 'rotateY', { min: -30, max: 30, step: 0.5 });
-  bind(fCam, 'rotateZ', { min: -15, max: 15, step: 0.5 });
+  /* Rotations locked to 0 for flat text mesh */
+  /* bind(fCam, 'rotateX', { min: -30, max: 30, step: 0.5 }); */
+  /* bind(fCam, 'rotateY', { min: -30, max: 30, step: 0.5 }); */
+  /* bind(fCam, 'rotateZ', { min: -15, max: 15, step: 0.5 }); */
   bind(fCam, 'scale', { min: 0.5, max: 3, step: 0.05 });
   bind(fCam, 'translateX', { min: -50, max: 50, step: 1 });
   bind(fCam, 'translateY', { min: -50, max: 50, step: 1 });
