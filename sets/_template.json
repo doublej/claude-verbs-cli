@@ -7,10 +7,7 @@
   "config": {
     "spinnerVerbs": {
       "mode": "replace",
-      "verbs": [
-        "I'm doing first thing",
-        "I'm doing second thing"
-      ]
+      "verbs": ["I'm doing first thing", "I'm doing second thing"]
     }
   }
 }

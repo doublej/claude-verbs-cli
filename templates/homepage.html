@@ -636,7 +636,6 @@
     lcdSprite.tileScale.set(lcdSz / 4);
     lcdSprite.blendMode = PIXI.BLEND_MODES.MULTIPLY;
     lcdSprite.visible = params.lcdEnabled;
-    contentContainer.addChild(lcdSprite);
 
     /* Dead pixels - optimized for native rendering */
     var deadPixelCanvas = buildDeadPixelLayer(app.screen.width, app.screen.height);
@@ -647,7 +646,6 @@
     deadPixelSprite.height = app.screen.height;
     deadPixelSprite.blendMode = PIXI.BLEND_MODES.MULTIPLY;
     deadPixelSprite.visible = params.deadPixelsEnabled;
-    contentContainer.addChild(deadPixelSprite);
 
     /* Glare - optimized for native rendering with screen blend */
     var glareCanvas = buildGlareCanvas(app.screen.width, app.screen.height);
@@ -657,7 +655,6 @@
     glareSprite.alpha = params.glareOpacity;
     glareSprite.x = app.screen.width - glareSprite.width * 0.4;
     glareSprite.y = -app.screen.height * 0.1;
-    contentContainer.addChild(glareSprite);
 
     /* RenderTexture + Camera Mesh - native rendering path with optimal resolution */
     var dpr = window.devicePixelRatio || 1;
@@ -673,6 +670,13 @@
     var cameraMeshVerts = new Float32Array(8);
     var cameraMesh = new PIXI.SimpleMesh(rt, cameraMeshVerts, cameraMeshUvs, cameraMeshIndices);
     app.stage.addChild(cameraMesh);
+
+    /* LCD + dead pixels + glare as stage overlays (rendered after RenderTexture) */
+    var overlayContainer = new PIXI.Container();
+    overlayContainer.addChild(lcdSprite);
+    overlayContainer.addChild(deadPixelSprite);
+    overlayContainer.addChild(glareSprite);
+    app.stage.addChild(overlayContainer);
 
     applyCamera();
 
