@@ -92,8 +92,7 @@ function validateVerbs(file: string, data: Record<string, unknown>): Result {
   errors.push(...checkVerbArray(file, verbs))
 
   const warnings: Issue[] = []
-  if (verbs.length < 15)
-    warnings.push({ file, message: `Only ${verbs.length} verbs (minimum 15)` })
+  if (verbs.length < 15) warnings.push({ file, message: `Only ${verbs.length} verbs (minimum 15)` })
   if (verbs.length > 100) warnings.push({ file, message: `${verbs.length} verbs (maximum 100)` })
 
   return { errors, warnings }
