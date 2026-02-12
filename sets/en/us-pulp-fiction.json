@@ -3,7 +3,7 @@
   "name": "us-pulp-fiction",
   "description": "Pulp Fiction crime drama spinner verbs",
   "author": "Codex",
-  "github": "jurrejan",
+  "github": "doublej",
   "language": "en_GB",
   "config": {
     "showTurnDuration": false,

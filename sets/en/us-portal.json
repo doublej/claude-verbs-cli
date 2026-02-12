@@ -3,7 +3,7 @@
   "name": "us-portal",
   "description": "Portal puzzle adventure spinner verbs",
   "author": "Codex",
-  "github": "jurrejan",
+  "github": "doublej",
   "language": "en_GB",
   "config": {
     "showTurnDuration": false,

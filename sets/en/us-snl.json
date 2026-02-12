@@ -3,7 +3,7 @@
   "name": "us-snl",
   "description": "Saturday Night Live-style sketch spinner verbs",
   "author": "Codex",
-  "github": "jurrejan",
+  "github": "doublej",
   "language": "en_GB",
   "config": {
     "showTurnDuration": false,

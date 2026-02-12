@@ -3,7 +3,7 @@
   "name": "jiskefet",
   "description": "Jiskefet-themed Dutch spinner verbs",
   "author": "JJ",
-  "github": "jurrejan",
+  "github": "doublej",
   "language": "nl_NL",
   "config": {
     "showTurnDuration": false,
