@@ -1,8 +1,7 @@
+import { footer, heading, hint, success, verbList } from './display.js'
 import { findSet, loadSets } from './sets.js'
 import { installVerbs, readSettings, resetVerbs } from './settings.js'
 import type { VerbSet } from './types.js'
-
-const SITE_URL = 'https://claudeverbs.com'
 
 async function requireSet(name: string): Promise<VerbSet> {
   const set = await findSet(name)
@@ -23,52 +22,51 @@ export async function list(language?: string): Promise<void> {
     console.log(language ? `No verb sets found for language "${language}".` : 'No verb sets found.')
     return
   }
-  console.log('Available verb sets:\n')
+  console.log(`\n${heading(`${sets.length} verb sets available`)}\n`)
   for (const set of sets) {
-    console.log(
-      `  ${set.name} — ${set.description} [${set.language}] (@${set.github}, ${set.config.spinnerVerbs.verbs.length} verbs)`,
-    )
+    const count = set.config.spinnerVerbs.verbs.length
+    console.log(`  ${set.name}  ─  ${set.description}`)
+    console.log(`    [${set.language}] @${set.github} · ${count} verbs\n`)
   }
-  console.log(`\nBrowse more sets at ${SITE_URL}`)
+  console.log(footer())
 }
 
 export async function show(name: string): Promise<void> {
   const set = await requireSet(name)
-  console.log(`${set.name} — ${set.description} (by ${set.author} @${set.github})`)
-  console.log(`Language: ${set.language}`)
-  console.log(`Mode: ${set.config.spinnerVerbs.mode}`)
-  console.log(`Verbs (${set.config.spinnerVerbs.verbs.length}):\n`)
-  for (const verb of set.config.spinnerVerbs.verbs) {
-    console.log(`  ${verb}`)
-  }
-  console.log(`\nBrowse more sets at ${SITE_URL}`)
+  const count = set.config.spinnerVerbs.verbs.length
+  console.log(`\n${heading(set.name)}\n`)
+  console.log(`  ${set.description}`)
+  console.log(`  by ${set.author} (@${set.github})`)
+  console.log(`  Language: ${set.language}  ·  Mode: ${set.config.spinnerVerbs.mode}`)
+  console.log(`\n  ── ${count} verbs ──\n`)
+  console.log(verbList(set.config.spinnerVerbs.verbs))
+  console.log(footer())
 }
 
 export async function install(name: string): Promise<void> {
   const set = await requireSet(name)
   await installVerbs(set)
-  console.log(
-    `Installed "${set.name}" [${set.language}] (${set.config.spinnerVerbs.verbs.length} verbs).`,
-  )
-  console.log(`Browse more sets at ${SITE_URL}`)
+  const count = set.config.spinnerVerbs.verbs.length
+  console.log(`\n${success(`Installed "${set.name}" [${set.language}] (${count} verbs)`)}`)
+  console.log(hint('Restart Claude Code to see the new spinner verbs'))
+  console.log(footer())
 }
 
 export async function current(): Promise<void> {
   const settings = await readSettings()
   if (!settings.spinnerVerbs?.verbs?.length) {
-    console.log('No custom spinner verbs installed (using defaults).')
-    console.log(`Browse sets at ${SITE_URL}`)
+    console.log(`\n${hint('No custom spinner verbs installed (using defaults)')}`)
+    console.log(footer())
     return
   }
   const { mode, verbs } = settings.spinnerVerbs
-  console.log(`Mode: ${mode}`)
-  console.log(`Verbs (${verbs.length}):\n`)
-  for (const verb of verbs) {
-    console.log(`  ${verb}`)
-  }
+  console.log(`\n${heading('Current spinner verbs')}\n`)
+  console.log(`  Mode: ${mode}`)
+  console.log(`\n  ── ${verbs.length} verbs ──\n`)
+  console.log(verbList(verbs))
 }
 
 export async function reset(): Promise<void> {
   await resetVerbs()
-  console.log('Spinner verbs reset to defaults.')
+  console.log(`\n${success('Spinner verbs reset to defaults')}`)
 }

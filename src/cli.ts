@@ -1,18 +1,20 @@
 #!/usr/bin/env bun
 import { current, install, list, reset, show } from './commands.js'
+import { banner } from './display.js'
 import { generatePrompt } from './prompt.js'
 
-const USAGE = `Usage: claude-verbs <command>
+const USAGE = `${banner()}
+  Usage: claude-verbs <command>
 
-Commands:
-  list [--language <code>]  Show available verb sets (filter by language)
-  show <name>               Show contents of a verb set
-  install <name>            Apply a verb set to Claude Code
-  current                   Show currently installed spinner verbs
-  reset                     Remove spinner verbs (restore defaults)
-  prompt <subject> [--language <locale>]  Generate a prompt for creating a new verb set
+  Commands:
+    list [--language <code>]               Show available verb sets
+    show <name>                            Show contents of a verb set
+    install <name>                         Apply a verb set to Claude Code
+    current                                Show currently installed spinner verbs
+    reset                                  Remove spinner verbs (restore defaults)
+    prompt <subject> [--language <locale>]  Generate a new verb set prompt
 
-Browse more sets at https://claudeverbs.com`
+  Browse more sets at https://claudeverbs.com`
 
 const argv = process.argv.slice(2)
 const command = argv[0]
